@@ -8,9 +8,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_theme.dart';
-import '../viewmodels/support_jobs_viewmodel.dart';
-import '../services/support_job_service.dart';
+import '../../theme/app_theme.dart';
+import '../../viewmodels/support_jobs_viewmodel.dart';
+import '../../services/support_job_service.dart';
 import 'active_job_screen.dart';
 
 class SupportJobsScreen extends StatefulWidget {

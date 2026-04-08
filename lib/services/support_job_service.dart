@@ -1,14 +1,62 @@
 // lib/services/support_job_service.dart  [TECHNICIAN APP]
-//
-// REST calls for the technician's support-job workflow.
-// Base URL and ApiClient should match your technician app setup.
 
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import '../core/api_client.dart';  // your technician app's ApiClient
+import '../core/api_client.dart';
 
 // ── Models ────────────────────────────────────────────────────────────────────
+
+class JobAddress {
+  final String? houseNo;
+  final String? address;
+  final String? city;
+  final String? state;
+  final String? pinCode;
+
+  const JobAddress({
+    this.houseNo,
+    this.address,
+    this.city,
+    this.state,
+    this.pinCode,
+  });
+
+  factory JobAddress.fromJson(Map<String, dynamic> j) => JobAddress(
+    houseNo: j['house_no'] as String?,
+    address: j['address']  as String?,
+    city:    j['city']     as String?,
+    state:   j['state']    as String?,
+    pinCode: j['pin_code'] as String?,
+  );
+
+  /// Human-readable one-liner for display
+  String get displayLine {
+    final parts = [
+      if (houseNo != null && houseNo!.isNotEmpty) houseNo,
+      if (address  != null && address!.isNotEmpty)  address,
+      if (city     != null && city!.isNotEmpty)     city,
+    ];
+    return parts.join(', ');
+  }
+
+  /// Full string suitable for geocoding query
+  String get geocodeQuery {
+    final parts = [
+      if (houseNo != null && houseNo!.isNotEmpty) houseNo,
+      if (address  != null && address!.isNotEmpty)  address,
+      if (city     != null && city!.isNotEmpty)     city,
+      if (state    != null && state!.isNotEmpty)    state,
+      if (pinCode  != null && pinCode!.isNotEmpty)  pinCode,
+      'India',
+    ];
+    return parts.join(', ');
+  }
+
+  bool get hasData =>
+      (houseNo?.isNotEmpty == true) ||
+          (address?.isNotEmpty  == true) ||
+          (city?.isNotEmpty     == true);
+}
 
 class SupportJob {
   final int      ticketId;
@@ -21,7 +69,8 @@ class SupportJob {
   final DateTime? jobAssignedAt;
   final DateTime? jobCompletedAt;
   final DateTime  createdAt;
-  final _Customer? customer;
+  final JobCustomer? customer;
+  final JobAddress?  address;
 
   const SupportJob({
     required this.ticketId,
@@ -35,6 +84,7 @@ class SupportJob {
     this.jobCompletedAt,
     required this.createdAt,
     this.customer,
+    this.address,
   });
 
   bool get isAssigned  => techJobStatus == 'assigned';
@@ -50,7 +100,7 @@ class SupportJob {
   }
 
   factory SupportJob.fromJson(Map<String, dynamic> j) => SupportJob(
-    ticketId:      int.tryParse(j['ticket_id'].toString()) ?? 0,
+    ticketId:      int.tryParse((j['id'] ?? j['ticket_id']).toString()) ?? 0,
     subject:       j['subject']         as String? ?? '',
     category:      j['category']        as String? ?? '',
     priority:      j['priority']        as String? ?? 'medium',
@@ -68,16 +118,19 @@ class SupportJob {
     createdAt: DateTime.tryParse(j['created_at'].toString())?.toLocal() ??
         DateTime.now(),
     customer: j['customer'] != null
-        ? _Customer.fromJson(j['customer'] as Map<String, dynamic>)
+        ? JobCustomer.fromJson(j['customer'] as Map<String, dynamic>)
+        : null,
+    address: j['address'] != null
+        ? JobAddress.fromJson(j['address'] as Map<String, dynamic>)
         : null,
   );
 }
 
-class _Customer {
+class JobCustomer {
   final String name;
   final String phone;
-  const _Customer({required this.name, required this.phone});
-  factory _Customer.fromJson(Map<String, dynamic> j) => _Customer(
+  const JobCustomer({required this.name, required this.phone});
+  factory JobCustomer.fromJson(Map<String, dynamic> j) => JobCustomer(
     name:  j['name']  as String? ?? '',
     phone: j['phone'] as String? ?? '',
   );
@@ -92,7 +145,6 @@ class SupportJobService {
 
   final _api = ApiClient();
 
-  // GET /technician/support-jobs/open
   Future<List<SupportJob>> getOpenJobs({int page = 1}) async {
     final res = await _api.get('/technician/support-jobs/open',
         params: {'page': page, 'limit': 20});
@@ -100,7 +152,6 @@ class SupportJobService {
     return list.map((j) => SupportJob.fromJson(j as Map<String, dynamic>)).toList();
   }
 
-  // GET /technician/support-jobs/mine?status=assigned
   Future<List<SupportJob>> getMyJobs({String status = 'assigned'}) async {
     final res = await _api.get('/technician/support-jobs/mine',
         params: {'status': status});
@@ -108,7 +159,6 @@ class SupportJobService {
     return list.map((j) => SupportJob.fromJson(j as Map<String, dynamic>)).toList();
   }
 
-  // POST /technician/support-jobs/:ticketId/grab
   Future<void> grabJob(int ticketId) async {
     try {
       await _api.post('/technician/support-jobs/$ticketId/grab');
@@ -117,7 +167,6 @@ class SupportJobService {
     }
   }
 
-  // PATCH /technician/support-jobs/:ticketId/resolve
   Future<void> resolveJob(int ticketId, {String? note}) async {
     try {
       await _api.patch('/technician/support-jobs/$ticketId/resolve',

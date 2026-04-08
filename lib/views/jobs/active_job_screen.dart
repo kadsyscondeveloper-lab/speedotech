@@ -10,9 +10,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../theme/app_theme.dart';
-import '../viewmodels/support_jobs_viewmodel.dart';
-import '../services/support_job_service.dart';
+import '../../theme/app_theme.dart';
+import '../../viewmodels/support_jobs_viewmodel.dart';
+import '../../services/support_job_service.dart';
+import '../../widgets/job_route_map.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final SupportJob          job;
@@ -59,7 +60,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   String _fmt(DateTime? dt) {
     if (dt == null) return '—';
     const m = ['Jan','Feb','Mar','Apr','May','Jun',
-                'Jul','Aug','Sep','Oct','Nov','Dec'];
+      'Jul','Aug','Sep','Oct','Nov','Dec'];
     final h = dt.hour.toString().padLeft(2,'0');
     final min = dt.minute.toString().padLeft(2,'0');
     return '${dt.day} ${m[dt.month-1]} ${dt.year}, $h:$min';
@@ -90,6 +91,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     _buildJobHeader(),
                     const SizedBox(height: 12),
                     _buildCustomerCard(),
+                    const SizedBox(height: 12),
+                    _buildRouteMapCard(),
                     const SizedBox(height: 12),
                     _buildTrackingCard(),
                     if (_vm.trackingError != null) ...[
@@ -211,6 +214,62 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             ),
           ),
       ]),
+    );
+  }
+
+
+  // ── Route map card ────────────────────────────────────────────────────────
+
+  Widget _buildRouteMapCard() {
+    final addr = widget.job.address;
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.route_rounded,
+                  color: AppColors.primary, size: 18),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Route to Customer',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.textDark)),
+                ],
+              ),
+            ),
+          ]),
+          if (addr != null && addr.hasData) ...[
+            const SizedBox(height: 6),
+            Row(children: [
+              const SizedBox(width: 44),
+              const Icon(Icons.location_on_rounded,
+                  size: 13, color: AppColors.textGrey),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(addr.displayLine,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textGrey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ]),
+          ],
+          const SizedBox(height: 12),
+          JobRouteMap(customerAddress: addr),
+        ],
+      ),
     );
   }
 
@@ -377,7 +436,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: const Text(
             'This will close the ticket and notify the customer. '
-            'Make sure the issue is fully fixed before confirming.',
+                'Make sure the issue is fully fixed before confirming.',
             style: TextStyle(color: AppColors.textGrey)),
         actions: [
           TextButton(
@@ -516,31 +575,31 @@ class _ResolveButton extends StatelessWidget {
         boxShadow: loading
             ? []
             : [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Center(
         child: loading
             ? const SizedBox(width: 22, height: 22,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5))
+            child: CircularProgressIndicator(
+                color: Colors.white, strokeWidth: 2.5))
             : const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle_rounded,
-                      color: Colors.white, size: 20),
-                  SizedBox(width: 8),
-                  Text('Mark as Resolved',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15)),
-                ],
-              ),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_rounded,
+                color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('Mark as Resolved',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15)),
+          ],
+        ),
       ),
     ),
   );

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'viewmodels/my_jobs_viewmodel.dart';
 import 'viewmodels/open_jobs_viewmodel.dart';
 import 'views/jobs/my_jobs_screen.dart';
+import 'views/jobs/support_jobs_screen.dart';
 import 'views/jobs/open_jobs_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/tech_auth_service.dart';
@@ -90,6 +91,9 @@ class _AppShellState extends State<AppShell> {
         );
       case 2:
         return _ProfileTab(onLogout: _confirmLogout);
+
+      case 3:
+        return const SupportJobsScreen();
       default:
         return ChangeNotifierProvider.value(
           value: _myJobsVM,
@@ -122,6 +126,7 @@ class _BottomNav extends StatelessWidget {
     {'icon': Icons.work_outline,   'iconActive': Icons.work,   'label': 'My Jobs'},
     {'icon': Icons.search_outlined, 'iconActive': Icons.search, 'label': 'Open Jobs'},
     {'icon': Icons.person_outline,  'iconActive': Icons.person, 'label': 'Profile'},
+    {'icon': Icons.support_outlined, 'iconActive': Icons.support, 'label':"Support Jobs"}
   ];
 
   @override
